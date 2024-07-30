@@ -26,8 +26,12 @@ namespace CPUFramework
             }
             return cmd;
         }
-
         public static DataTable GetDataTable(SqlCommand cmd)
+        {
+            return DoExecutesql(cmd, true);
+        }
+
+        private static DataTable DoExecutesql(SqlCommand cmd, bool loadtable)
         {
             
             DataTable dt = new();
@@ -39,12 +43,19 @@ namespace CPUFramework
                 try
                 {
                     SqlDataReader dr = cmd.ExecuteReader();
-                    dt.Load(dr);
+                    if (loadtable == true)
+                    {
+                        dt.Load(dr);
+                    }
                 }
                 catch (SqlException ex)
                 {
                     string msg = ParcedConstraintMesage(ex.Message);
                     throw new Exception(msg);
+                }
+                catch (InvalidCastException ex)
+                {
+                    throw new Exception(cmd.CommandText + ": " + ex.Message, ex);
                 }
             }
             SetAllColumnsAllowNull(dt);
@@ -53,12 +64,17 @@ namespace CPUFramework
 
         public static DataTable GetDataTable(string sqlstatement)
         {
-            return GetDataTable(new SqlCommand(sqlstatement));
+            return DoExecutesql(new SqlCommand(sqlstatement), true);
         }
         
         public static void ExecuteSQL(string sqlstatement)
         {
             GetDataTable(sqlstatement);
+        }
+
+        public static void ExecuteSQL(SqlCommand cmd)
+        {
+            DoExecutesql(cmd, false);
         }
 
         private static void SetAllColumnsAllowNull(DataTable dt)
@@ -137,6 +153,17 @@ namespace CPUFramework
             return n;
         }
 
+        public static void Setparamvalue(SqlCommand cmd, string paramname, object value)
+        {
+            try
+            {
+                cmd.Parameters[paramname].Value = value;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(cmd.CommandText + ": " + ex.Message, ex);
+            }
+        }
         private static string ParcedConstraintMesage(string msg)
         {
             string origmsg = msg;
@@ -169,6 +196,15 @@ namespace CPUFramework
                     msg = msg.Substring(0, pos);
                     msg = msg.Replace("_", " ");
                     msg = msg + msgend;
+
+                    if(prefix == "f_")
+                    {
+                        var words = msg.Split(" ");
+                        if(words.Length > 1)
+                        {
+                            msg = $"Cannot delete {words[0]} because it has a related {words[1]} record.";
+;                        }
+                    }
                 }
             }
             return msg;
