@@ -31,6 +31,32 @@ namespace CPUFramework
             return DoExecutesql(cmd, true);
         }
 
+        public static void SaveDateRow(DataRow row, string sprocname)
+        {
+            SqlCommand cmd = GetSqlCommand(sprocname);
+            foreach (DataColumn col in row.Table.Columns)
+            {
+                string paramname = $"@{col.ColumnName}";
+                if (cmd.Parameters.Contains(paramname))
+                {
+                    cmd.Parameters[paramname].Value = row[col.ColumnName];
+                }
+            }
+            DoExecutesql(cmd, false);
+
+            foreach (SqlParameter p in cmd.Parameters)
+            {
+                if (p.Direction == ParameterDirection.InputOutput)
+                {
+                    string colname = p.ParameterName.Substring(1);
+                    if (row.Table.Columns.Contains(colname))
+                    {
+                        row[colname] = p.Value;
+                    }
+                }
+            }
+        }
+
         private static DataTable DoExecutesql(SqlCommand cmd, bool loadtable)
         {
             
