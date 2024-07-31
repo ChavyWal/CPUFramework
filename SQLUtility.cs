@@ -103,6 +103,11 @@ namespace CPUFramework
             return DoExecutesql(new SqlCommand(sqlstatement), true);
         }
         
+        public static void SaveDateRow(DataRow row, string sprocname)
+        {
+            row.Table.Columns
+        }
+
         public static void ExecuteSQL(string sqlstatement)
         {
             GetDataTable(sqlstatement);
