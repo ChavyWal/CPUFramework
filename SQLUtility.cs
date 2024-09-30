@@ -13,7 +13,7 @@ namespace CPUFramework
     public class SQLUtility
     {
         private static string ConnectionString = "";
-        
+
 
         public static void SetConnectionString(string connstring, bool tryopen, string userid = "", string password = "")
         {
