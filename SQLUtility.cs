@@ -154,7 +154,6 @@ namespace CPUFramework
                         msg = $"{cmd.CommandText} did not do action that was requested.";
                     }
                     throw new Exception(msg);
-
                 }
             }
         }
