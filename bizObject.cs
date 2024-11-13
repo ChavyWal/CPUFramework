@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SqlClient;
+﻿using System.Data.SqlClient;
 using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Reflection;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
 namespace CPUFramework
 {
-    public class bizObject : INotifyPropertyChanged
+    public class bizObject <T>: INotifyPropertyChanged where T: bizObject<T>, new()
     {
         string _tablename = ""; string _getsproc = ""; string _updatesproc = ""; string _deletesproc = "";
         string _primarykeyname = ""; string _primarykeyparamname = "";string _typename = "";
@@ -54,6 +49,27 @@ namespace CPUFramework
             {
                 SetProp(col.ColumnName, dr[col.ColumnName]);
             }
+        }
+
+        public List<T> GetList( bool includeblank = false)
+        {
+            SqlCommand cmd = SQLUtility.GetSqlCommand(_getsproc);
+            SQLUtility.Setparamvalue(cmd, "@All", 1);
+            SQLUtility.Setparamvalue(cmd, "@IncludeBlank", includeblank);
+            var dt = SQLUtility.GetDataTable(cmd);
+            return  GetListFromDataTable(dt);
+        }
+
+        protected List<T> GetListFromDataTable(DataTable dt)
+        {
+            List<T> lst = new();
+            foreach (DataRow dr in dt.Rows)
+            {
+                T obj = new T();
+                obj.LoadProps(dr);
+                lst.Add(obj);
+            }
+            return lst;
         }
 
         public void Save()
@@ -144,6 +160,7 @@ namespace CPUFramework
             }
         }
 
+        protected string GetSprocName { get => _getsproc; }
         protected void InvokePropertyChanged([CallerMemberName] string propertyname = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
